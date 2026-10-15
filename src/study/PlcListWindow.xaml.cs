@@ -49,6 +49,9 @@ public partial class PlcListWindow : Window
 
     private PlcEntry? SelectedPlc => (PlcTreeView.SelectedItem as PlcNode)?.Entry;
 
+    /// <summary>Snapshot mode: show the window with one PLC selected.</summary>
+    internal void Select(string ip) => RefreshTree(selectIp: ip);
+
     private FolderNode? SelectedFolder => PlcTreeView.SelectedItem as FolderNode;
 
     private string CountSummary() =>

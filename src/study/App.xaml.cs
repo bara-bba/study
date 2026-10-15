@@ -46,6 +46,14 @@ public partial class App : Application
             return;
         }
 
+        // --probe <folder>: headless self-check (CI + packaged exe), see Probe.cs.
+        var probe = Array.IndexOf(e.Args, "--probe");
+        if (probe >= 0 && probe + 1 < e.Args.Length)
+        {
+            Shutdown(Probe.Run(e.Args[probe + 1]));
+            return;
+        }
+
         // --snapshot only renders windows (no monitoring, no saving), so it may run beside a live instance.
         var snap = Array.IndexOf(e.Args, "--snapshot");
         var snapshotMode = snap >= 0 && snap + 1 < e.Args.Length;
@@ -89,7 +97,12 @@ public partial class App : Application
 
         if (snapshotMode)
         {
-            Snapshot.Run(e.Args[snap + 1]);
+            var scaleAt = Array.IndexOf(e.Args, "--scale");
+            var scale = scaleAt >= 0 && scaleAt + 1 < e.Args.Length
+                        && double.TryParse(e.Args[scaleAt + 1], System.Globalization.CultureInfo.InvariantCulture, out var s)
+                ? s
+                : 1;
+            Snapshot.Run(e.Args[snap + 1], scale);
             _tray.Dispose();
             Shutdown();
             return;

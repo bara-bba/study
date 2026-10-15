@@ -13,6 +13,28 @@ to a daily CSV you can browse in the built-in log viewer.
 **study never writes to a PLC.** The reader interface has no write method, and a unit test
 (`ReadOnlyGuardTests`) fails if any libplctag write/set call appears anywhere in `src/`.
 
+## Download
+
+Grab `study-<version>.exe` from the [Releases](../../releases) page: one self-contained file
+(~75 MB, includes the .NET runtime, libplctag and the alarm sounds). No installer and no .NET
+install needed. Run it from anywhere; it lives in the system tray. Windows 10 2004+ / 11, x64.
+
+## Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/main.png" width="820" alt="Main window: watch cards with live values, trigger icons and a ringing alarm banner">
+</p>
+
+| Watch editor | PLC tree |
+|---|---|
+| <img src="docs/screenshots/watch-editor.png" width="380" alt="Watch editor with PLC, tag, data type, trigger and expression"> | <img src="docs/screenshots/plc-list.png" width="440" alt="PLC list as a folder tree with the detail panel"> |
+
+| Settings | Log viewer |
+|---|---|
+| <img src="docs/screenshots/settings.png" width="320" alt="Settings: alarm sound, volume, polling, log folder, accent colour"> | <img src="docs/screenshots/log-viewer.png" width="560" alt="Log viewer with colour-coded trigger and acknowledge events"> |
+
+*Screenshots use made-up demo PLCs and addresses (`study.exe --snapshot <folder> --scale 2`).*
+
 ## Quick start
 
 1. **PLCs…** → *Import from RSLinx* (reads RSLinx Classic's AB_ETH driver IP tables from the
@@ -118,17 +140,34 @@ folder, combine several days (Ctrl+click), filter by text and event, and refresh
 
 ## Build / run / test
 
-Requires the .NET 8 SDK (on this machine: `C:\Users\lorettin\.dotnet`).
+Requires the .NET 8 SDK (`dotnet` on PATH).
 
 ```powershell
-$env:PATH = "C:\Users\lorettin\.dotnet;$env:PATH"
 dotnet build
-dotnet test                       # 77 tests: expressions, triggers, CSV/RSLinx import, logs, runner, read-only guard
+dotnet test                       # 94 tests: expressions, triggers, PLC tree, CSV/JSON/RSLinx import, logs, runner, read-only guard
 .\src\study\bin\Debug\net8.0-windows10.0.19041.0\study.exe
 ```
 
-`study.exe --snapshot <folder>` renders every window to PNG with demo data and exits (no
-monitoring, no logging, nothing saved) — used for visual checks.
+Headless helpers (each exits by itself, never monitors, never saves):
+
+- `study.exe --snapshot <folder> [--scale 2]` renders every window to PNG with made-up demo data
+  (the README screenshots).
+- `study.exe --probe <folder>` writes `probe.txt`: version, built-in sounds found, and whether the
+  native libplctag library loads. Exit code 0 = OK. Used by CI and by `release.ps1`.
+
+## Release
+
+`.\release.ps1` builds `dist\study-<version>.exe` (single self-contained file, version from
+`src\study\study.csproj`, or `-Version 0.2.0`) and probes the packaged exe.
+
+On GitHub, pushing a tag does the same in Actions and attaches the exe to a Release:
+
+```powershell
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+`.github/workflows/ci.yml` builds, tests and probes every push to `master`.
 
 ## Layout
 

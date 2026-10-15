@@ -1,0 +1,37 @@
+name: CI
+
+# Build + unit tests + headless probe on every push / PR to master.
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    # WPF requires a Windows runner.
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build
+        run: dotnet build study.sln -c Release
+
+      - name: Unit tests
+        run: dotnet test study.sln -c Release --no-build
+
+      # Proves the built-in sounds are found and the native libplctag library loads
+      # (asks 127.0.0.1 for its tag list; "no PLC there" is the healthy answer).
+      - name: Smoke test (--probe)
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP 'probe'
+          $p = Start-Process 'src/study/bin/Release/net8.0-windows10.0.19041.0/study.exe' `
+                 -ArgumentList "--probe `"$out`"" -PassThru -Wait
+          Get-Content (Join-Path $out 'probe.txt')
+          if ($p.ExitCode -ne 0) { throw "probe failed (exit $($p.ExitCode))" }

@@ -21,12 +21,12 @@ public partial class LogViewerWindow : Window
     private string _folder;
     private List<LogEntry> _entries = [];
 
-    public LogViewerWindow()
+    public LogViewerWindow(string? folder = null)
     {
         InitializeComponent();
         DwmHelper.ApplyPowerToysChrome(this);
         Icon = App.CurrentIconSource();
-        _folder = App.Settings.LogFolder;
+        _folder = folder ?? App.Settings.LogFolder;
         EventCombo.ItemsSource = new[] { AllEvents }.Concat(LogEvents.All).ToList();
         EventCombo.SelectedIndex = 0;
         _live.Tick += (_, _) =>

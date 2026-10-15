@@ -1,0 +1,45 @@
+name: Release
+
+# Push a tag like v0.1.0 → builds study-0.1.0.exe (single self-contained file), probes it,
+# and attaches it to a GitHub Release named "study 0.1.0".
+on:
+  push:
+    tags: [ 'v*' ]
+
+permissions:
+  contents: write   # create the Release and upload the exe
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # The tag is the single source of truth for the version.
+      - name: Derive version from tag
+        id: ver
+        shell: pwsh
+        run: |
+          $v = '${{ github.ref_name }}' -replace '^v', ''
+          if ($v -notmatch '^\d+\.\d+\.\d+$') { throw "tag '${{ github.ref_name }}' is not vMAJOR.MINOR.PATCH" }
+          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Unit tests
+        run: dotnet test study.sln -c Release
+
+      - name: Build study.exe (+ probe)
+        shell: pwsh
+        run: ./release.ps1 -Version ${{ steps.ver.outputs.version }}
+
+      - name: Publish GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          gh release create '${{ github.ref_name }}' 'dist/study-${{ steps.ver.outputs.version }}.exe'
+          --title 'study ${{ steps.ver.outputs.version }}' --generate-notes

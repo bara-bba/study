@@ -48,6 +48,9 @@ internal sealed class MonitorService
 
     public IReadOnlyList<PlcEntry> Plcs { get; private set; } = [];
 
+    /// <summary>Snapshot mode only: shows <paramref name="plcs"/> without saving anything.</summary>
+    public void UseInMemoryPlcs(IEnumerable<PlcEntry> plcs) => Plcs = PlcTree.Sort(plcs);
+
     public ObservableCollection<WatchItem> Watches { get; } = new();
 
     public bool Paused { get; private set; }

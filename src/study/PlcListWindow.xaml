@@ -142,7 +142,7 @@
                                     Style="{StaticResource ToolIconButton}" Height="32" Margin="8,0,0,0"
                                     ToolTip="Pick an existing folder" />
                         </Grid>
-                        <TextBlock Style="{StaticResource Hint}" Text="Use / for sub-folders, e.g. TRN3-ELTEN/Stacker. Empty = top level." />
+                        <TextBlock Style="{StaticResource Hint}" Text="Use / for sub-folders, e.g. Line 2/Stackers. Empty = top level." />
                         <TextBlock Text="Notes" Style="{StaticResource Label}" Margin="2,12,0,6" />
                         <TextBox Name="NotesBox" Style="{StaticResource DarkTextBox}" />
 
@@ -159,7 +159,7 @@
                         <TextBlock Text="Folder" Style="{StaticResource Label}" />
                         <TextBox Name="FolderPathBox" Style="{StaticResource DarkTextBox}" />
                         <TextBlock Style="{StaticResource Hint}"
-                                   Text="Rename, or move it with a path: TRN3/ELTEN puts it under TRN3. Empty = move its PLCs to the top level." />
+                                   Text="Rename, or move it with a path: Site/Line 2 puts it under Site. Empty = move its PLCs to the top level." />
                         <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
                             <Button Content="Rename / move" Click="RenameFolder_Click" Style="{StaticResource AccentButton}" Margin="0,0,8,0" />
                             <Button Content="＋  Add PLC here" Click="Add_Click" Style="{StaticResource SubtleButton}" />
