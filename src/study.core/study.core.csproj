@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Pure logic + the PLC reader. No WPF here, so everything in this project is unit-testable
+    from tests/Study.Tests without a UI or a real PLC.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Study.Core</RootNamespace>
+    <AssemblyName>study.core</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- EtherNet/IP (CIP) client for ControlLogix / CompactLogix. Only read APIs are used. -->
+    <PackageReference Include="libplctag" Version="1.5.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="study.tests" />
+  </ItemGroup>
+
+</Project>

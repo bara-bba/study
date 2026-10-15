@@ -1,0 +1,16 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+dist/
+
+# Rider / VS
+.vs/
+.idea/
+*.user
+
+# Test results
+TestResults/
+
+# OS
+Thumbs.db
+Desktop.ini

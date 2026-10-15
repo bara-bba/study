@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Embedded so Explorer, the pinned taskbar button and Alt+Tab use the multi-size icon.
+         Regenerate with the emit-icon startup flag: study.exe emit-icon (two leading dashes) src\study\app.ico -->
+    <ApplicationIcon>app.ico</ApplicationIcon>
+    <AssemblyName>study</AssemblyName>
+    <RootNamespace>Study</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Remove="System.Windows.Forms" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\study.core\study.core.csproj" />
+  </ItemGroup>
+
+  <!-- Built-in alarm sounds, generated with ffmpeg (original tones, no licensing). Copied next to
+       study.exe so the WPF MediaPlayer can open them by path. -->
+  <ItemGroup>
+    <None Include="Sounds\*.mp3">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
