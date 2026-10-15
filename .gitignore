@@ -1,0 +1,22 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+dist/
+
+# Rider / VS
+.vs/
+.idea/
+*.user
+
+# Test results
+TestResults/
+
+# Site PLC lists stay local; keep them in %APPDATA%\study. Only the demo example is tracked.
+config/*
+*plcs*.csv
+plcs*.json
+!config/plcs.example.json
+
+# OS
+Thumbs.db
+Desktop.ini

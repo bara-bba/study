@@ -1,0 +1,24 @@
+// Example PLC list with made-up demo data. Copy it to %APPDATA%\study\plcs.json,
+// or load it with Import... in the PLC window, then replace the entries with your own.
+// Keep your real list outside the repo: .gitignore blocks everything in config/ except this file.
+{
+  "version": 2,
+  "groups": [
+    { "name": "Line1", "groups": [
+        { "name": "Conveyors", "groups": [], "plcs": [
+            { "name": "Merge_01", "ip": "192.168.10.11", "slot": 0, "source": "Manual", "notes": "" },
+            { "name": "Merge_02", "ip": "192.168.10.12", "slot": 0, "source": "Manual", "notes": "" } ] },
+        { "name": "Sortation", "groups": [], "plcs": [
+            { "name": "Sorter_01", "ip": "192.168.10.21", "slot": 0, "source": "Manual", "notes": "" },
+            { "name": "Induct_01", "ip": "192.168.10.22", "slot": 0, "source": "Manual", "notes": "" } ] } ],
+      "plcs": [] },
+    { "name": "Line2", "groups": [
+        { "name": "Stackers", "groups": [], "plcs": [
+            { "name": "Stacker_1", "ip": "192.168.20.21", "slot": 0, "source": "Manual", "notes": "" },
+            { "name": "Stacker_2", "ip": "192.168.20.22", "slot": 0, "source": "Manual", "notes": "" } ] } ],
+      "plcs": [] }
+  ],
+  "plcs": [
+    { "name": "Utilities_PLC", "ip": "192.168.30.5", "slot": 0, "source": "Manual", "notes": "" }
+  ]
+}
