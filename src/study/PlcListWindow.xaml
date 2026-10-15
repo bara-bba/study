@@ -127,7 +127,7 @@
                             </Grid.ColumnDefinitions>
                             <TextBox Name="SlotBox" Style="{StaticResource DarkTextBox}" />
                             <Button Grid.Column="1" Name="DetectButton" Content="Detect slot" Click="Detect_Click"
-                                    Style="{StaticResource SubtleButton}" Margin="8,0,0,0"
+                                    Style="{StaticResource SubtleButton}" Height="32" Padding="14,0" Margin="8,0,0,0"
                                     ToolTip="Tries slots 0–16 until the CPU answers (read-only)" />
                         </Grid>
                         <TextBlock Style="{StaticResource Hint}" Text="CompactLogix: always 0. ControlLogix: the slot the CPU card sits in." />

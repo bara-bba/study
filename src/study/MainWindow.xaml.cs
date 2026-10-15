@@ -63,7 +63,10 @@ public partial class MainWindow : Window
 
     internal void RefreshPauseState()
     {
-        PauseButton.Content = App.Monitor.Paused ? "▶  Resume monitoring" : "⏸  Pause monitoring";
+        PauseLabel.Text = App.Monitor.Paused ? "Resume monitoring" : "Pause monitoring";
+        PauseGlyph.Data = System.Windows.Media.Geometry.Parse(App.Monitor.Paused
+            ? "M 0,0 L 10,6 L 0,12 Z" // play
+            : "M 0,0 H 3.5 V 12 H 0 Z M 6.5,0 H 10 V 12 H 6.5 Z"); // pause
         RefreshSummary();
     }
 

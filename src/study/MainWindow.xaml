@@ -61,7 +61,15 @@
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                 <TextBlock Name="SummaryText" Foreground="{StaticResource Brush.TextTertiary}" FontSize="12"
                            VerticalAlignment="Center" Margin="0,0,12,0" />
-                <Button Name="PauseButton" Content="⏸  Pause monitoring" Click="Pause_Click" Style="{StaticResource SubtleButton}" />
+                <Button Name="PauseButton" Click="Pause_Click" Style="{StaticResource SubtleButton}">
+                    <!-- Drawn glyph (not the ⏸ character): font fallback put that one off-centre. -->
+                    <StackPanel Orientation="Horizontal">
+                        <Path Name="PauseGlyph" Width="9" Height="10" Stretch="Uniform" VerticalAlignment="Center"
+                              Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                              Data="M 0,0 H 3.5 V 12 H 0 Z M 6.5,0 H 10 V 12 H 6.5 Z" Margin="0,1,9,0" />
+                        <TextBlock Name="PauseLabel" Text="Pause monitoring" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
             </StackPanel>
         </Grid>
 

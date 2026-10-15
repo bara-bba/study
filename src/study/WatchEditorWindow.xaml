@@ -55,7 +55,7 @@
                 <TextBox Name="TagBox" Style="{StaticResource DarkTextBox}" FontFamily="Cascadia Mono, Consolas" />
             </StackPanel>
             <Button Grid.Column="1" Content="Browse…" Click="Browse_Click" Style="{StaticResource SubtleButton}"
-                    VerticalAlignment="Bottom" Margin="8,0,8,0" ToolTip="List the tags in the PLC" />
+                    Height="32" Padding="14,0" VerticalAlignment="Bottom" Margin="8,0,8,0" ToolTip="List the tags in the PLC" />
             <StackPanel Grid.Column="2">
                 <TextBlock Text="Data type" Style="{StaticResource Label}" />
                 <ComboBox Name="TypeCombo" Style="{StaticResource DarkCombo}" SelectionChanged="Any_Changed" />

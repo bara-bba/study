@@ -27,8 +27,9 @@
             </Grid.ColumnDefinitions>
             <ComboBox Name="SoundCombo" Style="{StaticResource DarkCombo}" SelectionChanged="SoundCombo_SelectionChanged" />
             <Button Grid.Column="1" Content="▶  Test" Click="TestSound_Click" Style="{StaticResource SubtleButton}" Margin="8,0,0,0"
-                    ToolTip="Play the selected sound at the chosen volume" />
-            <Button Grid.Column="2" Content="⏹  Stop" Click="StopSound_Click" Style="{StaticResource SubtleButton}" Margin="8,0,0,0" />
+                    Height="32" Padding="14,0" ToolTip="Play the selected sound at the chosen volume" />
+            <Button Grid.Column="2" Content="⏹  Stop" Click="StopSound_Click" Style="{StaticResource SubtleButton}" Margin="8,0,0,0"
+                    Height="32" Padding="14,0" />
         </Grid>
         <Grid Name="CustomPanel" Margin="0,8,0,0">
             <Grid.ColumnDefinitions>
