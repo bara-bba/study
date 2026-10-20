@@ -23,6 +23,16 @@ internal static class AppIcon
     // Inset per side: 5.5 % looked small next to Kiro, 1.5 % too big, 3.5 % still a touch big.
     private const float PadFraction = 0.045f;
 
+    // Pulse trace (fractions of the icon size): flat → spike up → dip → flat, scaled ~80 %
+    // around the centre so the glyph sits smaller inside the square.
+    private static readonly (float X, float Y)[] Trace =
+    {
+        (0.26f, 0.54f), (0.404f, 0.54f), (0.476f, 0.308f),
+        (0.556f, 0.692f), (0.612f, 0.54f), (0.74f, 0.54f),
+    };
+
+    private const float StrokeFraction = 0.065f;
+
     /// <summary>
     /// Vector version of the glyph for in-window use (title bar). Scaling the 256 px bitmap down
     /// to ~22 DIP made it look pixelated; a DrawingImage is rasterised crisply at the real DPI.
@@ -53,21 +63,17 @@ internal static class AppIcon
             new System.Windows.Media.RectangleGeometry(
                 new System.Windows.Rect(pad, pad, s - 2 * pad, s - 2 * pad), radius, radius)));
 
-        double y = s * 0.55;
-        var trace = new System.Windows.Media.PathFigure { StartPoint = new System.Windows.Point(s * 0.20, y) };
-        foreach (var p in new[]
-                 {
-                     new System.Windows.Point(s * 0.38, y),
-                     new System.Windows.Point(s * 0.47, s * 0.26),
-                     new System.Windows.Point(s * 0.57, s * 0.74),
-                     new System.Windows.Point(s * 0.64, y),
-                     new System.Windows.Point(s * 0.80, y),
-                 })
+        var trace = new System.Windows.Media.PathFigure
         {
-            trace.Segments.Add(new System.Windows.Media.LineSegment(p, isStroked: true));
+            StartPoint = new System.Windows.Point(s * Trace[0].X, s * Trace[0].Y),
+        };
+        foreach (var (x, y) in Trace.Skip(1))
+        {
+            trace.Segments.Add(new System.Windows.Media.LineSegment(
+                new System.Windows.Point(s * x, s * y), isStroked: true));
         }
 
-        var pen = new System.Windows.Media.Pen(Brush(glyph), s * 0.08)
+        var pen = new System.Windows.Media.Pen(Brush(glyph), s * StrokeFraction)
         {
             StartLineCap = System.Windows.Media.PenLineCap.Round,
             EndLineCap = System.Windows.Media.PenLineCap.Round,
@@ -99,7 +105,7 @@ internal static class AppIcon
             g.FillPath(bg, square);
         }
 
-        float thickness = Math.Max(1.4f, s * 0.08f);
+        float thickness = Math.Max(1.3f, s * StrokeFraction);
         using var pen = new Pen(glyph, thickness)
         {
             StartCap = LineCap.Round,
@@ -108,16 +114,7 @@ internal static class AppIcon
         };
 
         // Flat → spike up → dip → flat: a single heartbeat across the middle.
-        float y = s * 0.55f;
-        g.DrawLines(pen, new[]
-        {
-            new PointF(s * 0.20f, y),
-            new PointF(s * 0.38f, y),
-            new PointF(s * 0.47f, s * 0.26f),
-            new PointF(s * 0.57f, s * 0.74f),
-            new PointF(s * 0.64f, y),
-            new PointF(s * 0.80f, y),
-        });
+        g.DrawLines(pen, Trace.Select(p => new PointF(s * p.X, s * p.Y)).ToArray());
 
         return bmp;
     }
