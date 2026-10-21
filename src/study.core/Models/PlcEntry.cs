@@ -19,12 +19,12 @@ public sealed record PlcEntry
     public string Notes { get; init; } = "";
 
     /// <summary>
-    /// Folder in the PLC tree, as a '/'-separated path ("TRN3-ELTEN/Stacker"). Empty = top level.
+    /// Folder in the PLC tree, as a '/'-separated path ("Line1/Stacker"). Empty = top level.
     /// </summary>
     public string Group { get; init; } = "";
 
     public string DisplayName => string.IsNullOrWhiteSpace(Name) ? Ip : $"{Name} ({Ip})";
 
-    /// <summary>"TRN3-ELTEN › Stacker" for display, or "" at top level.</summary>
+    /// <summary>"Line1 › Stacker" for display, or "" at top level.</summary>
     public string GroupLabel => Group.Replace("/", " › ");
 }

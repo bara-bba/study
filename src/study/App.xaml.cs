@@ -1,4 +1,4 @@
-﻿using System.Threading;
+using System.Threading;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -125,7 +125,12 @@ public partial class App : Application
         Store.Save(StudySettings.FileName, settings);
         Monitor.ApplySettings(settings);
         RefreshTrayIcon(force: true);
+        _main?.RefreshAppIcon();
     }
+
+    /// <summary>The accent-coloured .ico (all sizes), used for the taskbar button.</summary>
+    internal static byte[] CurrentIcoBytes() =>
+        AppIcon.BuildIco(ToDrawing(AccentTheme.Current), ToDrawing(AccentTheme.OnAccent));
 
     internal void ShowMain()
     {

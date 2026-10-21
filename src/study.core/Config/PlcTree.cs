@@ -71,7 +71,7 @@ public static class PlcTree
         AllowTrailingCommas = true,
     };
 
-    /// <summary>Trims each segment and drops empty ones: " TRN3 // MDP " → "TRN3/MDP".</summary>
+    /// <summary>Trims each segment and drops empty ones: " Line1 // MDP " → "Line1/MDP".</summary>
     public static string NormalizeGroup(string? group) =>
         string.Join(Separator, (group ?? "")
             .Split(Separator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
@@ -230,7 +230,7 @@ public static class PlcTree
 
 /// <summary>
 /// Case-insensitive "natural" order: digit runs compare by value, so PH2 &lt; PH10 and
-/// 10.137.16.9 &lt; 10.137.16.74.
+/// 192.168.1.9 &lt; 192.168.1.74.
 /// </summary>
 public sealed class NaturalComparer : IComparer<string?>
 {

@@ -176,22 +176,88 @@ public sealed class LibPlcTagBrowser : ITagBrowser
         return infos.Select(i => ToBrowsed(i, program)).OrderBy(t => t.Name, StringComparer.OrdinalIgnoreCase).ToList();
     }
 
+    private const ushort StructBit = 0x8000;
+    private const ushort SystemBit = 0x1000;
+    private const ushort ArrayBits = 0x6000;
+    private const ushort UdtIdMask = 0x0FFF;
+
+    private readonly Dictionary<(string Ip, ushort Id), UdtInfo> _udtCache = new();
+
+    public async Task<IReadOnlyList<BrowsedTag>> ListMembersAsync(PlcEntry plc, string parentName, ushort udtId,
+        TimeSpan timeout, CancellationToken ct)
+    {
+        if (!_udtCache.TryGetValue((plc.Ip, udtId), out var udt))
+        {
+            using var tag = new Tag<UdtInfoPlcMapper, UdtInfo>
+            {
+                Gateway = plc.Ip,
+                Path = LibPlcTagReader.CipPath(plc.Slot),
+                PlcType = PlcType.ControlLogix,
+                Protocol = Protocol.ab_eip,
+                Name = $"@udt/{udtId}",
+                Timeout = timeout,
+            };
+
+            try
+            {
+                udt = await tag.ReadAsync(ct).ConfigureAwait(false);
+            }
+            catch (LibPlcTagException ex)
+            {
+                throw new PlcException($"Could not read the structure layout of '{parentName}' ({ex.Message}).", ex);
+            }
+
+            _udtCache[(plc.Ip, udtId)] = udt;
+        }
+
+        return udt.Fields
+            .Where(f => !IsHiddenMember(f.Name))
+            .Select(f => ToMember(f, parentName))
+            .ToList(); // keep the controller's member order — it matches Studio 5000's
+    }
+
+    /// <summary>
+    /// Compiler-generated members: the hidden SINT that hosts a UDT's BOOLs ("ZZZZZZZZZZ…") and
+    /// internals like "__…". Neither can be addressed by name.
+    /// </summary>
+    internal static bool IsHiddenMember(string name) =>
+        string.IsNullOrEmpty(name)
+        || name.StartsWith("ZZZZZZZZZZ", StringComparison.Ordinal)
+        || name.StartsWith("__", StringComparison.Ordinal);
+
+    internal static BrowsedTag ToMember(UdtFieldInfo field, string parentName)
+    {
+        var isStruct = (field.Type & StructBit) != 0;
+        // In a template an array member is flagged with 0x2000 and Metadata holds its length;
+        // for a BOOL member Metadata is the bit number instead, so only the flag counts.
+        var isArray = (field.Type & 0x2000) != 0;
+        var atomic = isStruct ? null : TagDataTypeExtensions.FromCipTypeCode(field.Type);
+        var label = atomic?.ToString().ToUpperInvariant() ?? (isStruct ? "UDT/struct" : $"0x{field.Type:X4}");
+        if (isArray)
+        {
+            label += $"[{field.Metadata}]";
+        }
+
+        return new BrowsedTag($"{parentName}.{field.Name}", isArray ? null : atomic, label, false, isArray,
+            isStruct ? (ushort)(field.Type & UdtIdMask) : null);
+    }
+
     private static BrowsedTag ToBrowsed(TagInfo info, string? program)
     {
-        const ushort SystemBit = 0x1000;
-        const ushort StructBit = 0x8000;
         var isProgram = info.Name.StartsWith("Program:", StringComparison.OrdinalIgnoreCase);
-        var isArray = (info.Type & 0x6000) != 0;
-        var atomic = (info.Type & StructBit) == 0 ? TagDataTypeExtensions.FromCipTypeCode(info.Type) : null;
+        var isArray = (info.Type & ArrayBits) != 0;
+        var isStruct = (info.Type & StructBit) != 0;
+        var atomic = !isStruct ? TagDataTypeExtensions.FromCipTypeCode(info.Type) : null;
         var label = isProgram ? "PROGRAM"
             : atomic?.ToString().ToUpperInvariant()
-              ?? ((info.Type & StructBit) != 0 ? "UDT/struct" : (info.Type & SystemBit) != 0 ? "system" : $"0x{info.Type:X4}");
+              ?? (isStruct ? "UDT/struct" : (info.Type & SystemBit) != 0 ? "system" : $"0x{info.Type:X4}");
         if (isArray)
         {
             label += "[]";
         }
 
         var name = string.IsNullOrEmpty(program) || isProgram ? info.Name : $"{program}.{info.Name}";
-        return new BrowsedTag(name, isArray ? null : atomic, label, isProgram, isArray);
+        return new BrowsedTag(name, isArray ? null : atomic, label, isProgram, isArray,
+            isStruct && !isProgram ? (ushort)(info.Type & UdtIdMask) : null);
     }
 }

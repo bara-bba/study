@@ -24,6 +24,8 @@ internal sealed class MonitorService
     private readonly IPinger _pinger = new IcmpPinger();
     private readonly Dictionary<Guid, WatchRunner> _runners = new();
     private readonly Dictionary<Guid, string> _lastProblem = new();
+    private readonly Dictionary<Guid, int> _restartGeneration = new();
+    private readonly HashSet<Guid> _commAlarmCarry = new();
     private bool _soundAutoSilenced;
 
     public MonitorService(JsonStore store, StudySettings settings, Dispatcher dispatcher)
@@ -135,6 +137,9 @@ internal sealed class MonitorService
 
     public void Remove(WatchItem item)
     {
+        // Bump the generation so a restart still in flight doesn't recreate the deleted watch.
+        _restartGeneration[item.Id] = _restartGeneration.GetValueOrDefault(item.Id) + 1;
+        _commAlarmCarry.Remove(item.Id);
         _ = StopRunnerAsync(item);
         Watches.Remove(item);
         SaveWatches();
@@ -196,28 +201,30 @@ internal sealed class MonitorService
 
     private async void Restart(WatchItem item)
     {
+        // Saves can arrive faster than a runner stops. Only the newest restart for a watch may
+        // create its runner; an older one that finishes stopping late just gives up.
+        var generation = _restartGeneration[item.Id] = _restartGeneration.GetValueOrDefault(item.Id) + 1;
+        LogAlarmClearedByRestart(item);
         await StopRunnerAsync(item);
+        if (_restartGeneration.GetValueOrDefault(item.Id) != generation)
+        {
+            return;
+        }
+
         if (Paused || !item.IsEnabled)
         {
             item.Status = WatchStatus.Stopped;
             item.Message = Paused ? "Monitoring paused" : "Disabled";
+            item.Alarm = AlarmState.Idle;
+            item.CommAlarm = false;
+            _commAlarmCarry.Remove(item.Id);
+            RefreshAlarms();
             return;
         }
 
         var plc = FindPlc(item.Definition.PlcIp)
                   ?? new PlcEntry { Ip = item.Definition.PlcIp, Name = item.Definition.PlcIp };
-        WatchRunner runner;
-        try
-        {
-            runner = new WatchRunner(item.Definition, plc, _readerFactory, _pinger, Settings.SkipPing);
-        }
-        catch (Core.Expressions.ExpressionException ex)
-        {
-            item.Status = WatchStatus.Error;
-            item.Message = $"Expression: {ex.Message}";
-            return;
-        }
-
+        var runner = new WatchRunner(item.Definition, plc, _readerFactory, _pinger, Settings.SkipPing);
         runner.Updated += u => _dispatcher.BeginInvoke(() => OnUpdate(item, runner, u));
         _runners[item.Id] = runner;
         item.Value = null;
@@ -225,6 +232,27 @@ internal sealed class MonitorService
         item.CommAlarm = false;
         runner.Start();
         RefreshAlarms();
+    }
+
+    /// <summary>
+    /// A restart wipes the runner's alarm state. Log it so the alarm doesn't vanish without a
+    /// trace, and remember a connection-lost alarm so it comes back if the PLC is still down.
+    /// </summary>
+    private void LogAlarmClearedByRestart(WatchItem item)
+    {
+        if (item.CommAlarm)
+        {
+            _commAlarmCarry.Add(item.Id);
+        }
+
+        if (!item.IsRinging && item.Alarm != AlarmState.Acknowledged)
+        {
+            return;
+        }
+
+        var plc = FindPlc(item.Definition.PlcIp);
+        Logger.Log(LogEvents.Cleared, item.Title, plc?.Name ?? "", item.Definition.PlcIp, item.Definition.Tag,
+            item.ValueText, "Alarm cleared: watch restarted after a change");
     }
 
     private async Task StopRunnerAsync(WatchItem item)
@@ -255,9 +283,28 @@ internal sealed class MonitorService
         {
             item.Value = u.Value;
             item.LastRead = u.LastRead;
+            item.SetAndValues(u.AndValues, u.AndMet);
         }
 
         var valueText = ValueFormat.Format(u.Value, def.DataType);
+        var andDetail = string.Join("; ", def.AndConditions.Select((c, i) =>
+        {
+            var letter = Core.Expressions.LogicFormula.LetterFor(i + 1);
+            return i < u.AndValues.Count
+                ? $"{letter} {c.Tag} = {ValueFormat.Format(u.AndValues[i], c.DataType)}"
+                : $"{letter} {c.Describe()}";
+        }));
+        if (def.AndConditions.Count > 0)
+        {
+            try
+            {
+                andDetail = $"when {def.BuildLogic()}; {andDetail}";
+            }
+            catch (Core.Expressions.ExpressionException)
+            {
+                // Validated on save; a hand-edited bad formula still logs the values.
+            }
+        }
         void Log(string evt, string detail = "") =>
             Logger.Log(evt, item.Title, plc.Name, plc.Ip, def.Tag, u.Value is null ? "" : valueText, detail);
 
@@ -281,7 +328,13 @@ internal sealed class MonitorService
             }
 
             var lost = previous == WatchStatus.Connected && u.Status is WatchStatus.Unreachable or WatchStatus.Error;
-            if (lost && Settings.AlarmOnConnectionLost && !item.CommAlarm)
+            var stillDown = u.Status is WatchStatus.Unreachable or WatchStatus.Error && _commAlarmCarry.Remove(item.Id);
+            if (u.Status == WatchStatus.Connected)
+            {
+                _commAlarmCarry.Remove(item.Id);
+            }
+
+            if ((lost || stillDown) && Settings.AlarmOnConnectionLost && !item.CommAlarm)
             {
                 item.CommAlarm = true;
                 _soundAutoSilenced = false;
@@ -292,9 +345,12 @@ internal sealed class MonitorService
         switch (u.Outcome)
         {
             case TriggerOutcome.Fired:
-                Log(LogEvents.Trigger, def.Mode.Describe(def.Expression));
+                Log(LogEvents.Trigger, andDetail.Length == 0
+                    ? def.Mode.Describe(def.Expression)
+                    : $"{def.Mode.Describe(def.Expression)}; {andDetail}");
                 _soundAutoSilenced = false;
-                AlarmFired?.Invoke($"ALARM: {item.Title}", $"{plc.DisplayName}  {def.Tag} = {valueText}");
+                AlarmFired?.Invoke($"ALARM: {item.Title}", $"{plc.DisplayName}  {def.Tag} = {valueText}"
+                                                           + (andDetail.Length == 0 ? "" : $"\n{andDetail}"));
                 break;
             case TriggerOutcome.Cleared:
                 Log(LogEvents.Cleared, "Condition no longer met");

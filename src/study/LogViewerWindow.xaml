@@ -99,6 +99,8 @@
                 <DataGrid Grid.Row="1" Name="EntryGrid" Style="{StaticResource DarkGrid}">
                     <DataGrid.RowStyle>
                         <Style TargetType="DataGridRow" BasedOn="{StaticResource DarkGridRow}">
+                            <!-- Full detail on hover: the column trims long text. -->
+                            <Setter Property="ToolTip" Value="{Binding Detail}" />
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding Event}" Value="TRIGGER">
                                     <Setter Property="Foreground" Value="{StaticResource Brush.Bad}" />
@@ -118,12 +120,12 @@
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Time" Binding="{Binding Timestamp, StringFormat=yyyy-MM-dd HH:mm:ss.fff}" Width="178" />
                         <DataGridTextColumn Header="Event" Binding="{Binding Event}" Width="118" />
-                        <DataGridTextColumn Header="Watch" Binding="{Binding Watch}" Width="1.2*" MinWidth="110" />
+                        <DataGridTextColumn Header="Watch" Binding="{Binding Watch}" Width="*" MinWidth="110" />
                         <DataGridTextColumn Header="PLC" Binding="{Binding Plc}" Width="105" />
                         <DataGridTextColumn Header="IP" Binding="{Binding Ip}" Width="115" />
-                        <DataGridTextColumn Header="Tag" Binding="{Binding Tag}" Width="1.2*" MinWidth="110" />
+                        <DataGridTextColumn Header="Tag" Binding="{Binding Tag}" Width="*" MinWidth="110" />
                         <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="66" />
-                        <DataGridTextColumn Header="Detail" Binding="{Binding Detail}" Width="1.6*" MinWidth="140" />
+                        <DataGridTextColumn Header="Detail" Binding="{Binding Detail}" Width="2.4*" MinWidth="200" />
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>

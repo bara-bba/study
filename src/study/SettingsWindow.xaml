@@ -128,7 +128,7 @@
             <TextBlock Text="Accent color" Foreground="{StaticResource Brush.TextSecondary}" FontSize="13"
                        VerticalAlignment="Center" Margin="2,0,12,0" />
             <Border Grid.Column="1" Name="AccentSwatch" Width="24" Height="24" CornerRadius="4"
-                    BorderBrush="{StaticResource Brush.StrokeSubtle}" BorderThickness="1" Margin="0,0,8,0" />
+                    BorderBrush="{StaticResource Brush.TextTertiary}" BorderThickness="1" Margin="0,0,8,0" />
             <TextBox Grid.Column="2" Name="AccentBox" Style="{StaticResource DarkTextBox}" MaxLength="7" TextChanged="AccentBox_TextChanged" />
         </Grid>
         <CheckBox Name="StartWithWindowsCheck" Style="{StaticResource DarkCheckBox}" Margin="0,14,0,0" Content="Start with Windows" />

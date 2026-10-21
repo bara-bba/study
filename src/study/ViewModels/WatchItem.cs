@@ -39,6 +39,7 @@ internal sealed class WatchItem : INotifyPropertyChanged
             OnChanged(nameof(Mode));
             OnChanged(nameof(ValueText));
             OnChanged(nameof(IsEnabled));
+            SetAndValues([], []);
         }
     }
 
@@ -63,6 +64,55 @@ internal sealed class WatchItem : INotifyPropertyChanged
         $"{_definition.Mode.Describe(_definition.Expression)}  ·  every {FormatPoll(_definition.PollMs)}";
 
     public TriggerMode Mode => _definition.Mode;
+
+    /// <summary>
+    /// One line per card for the extra conditions, with live values once read. All-AND watches
+    /// keep the short form "AND  Motor.Fb is FALSE (now TRUE ✗)"; anything else shows the formula
+    /// first, then each letter: "Alarm when (A OR B) AND C  ·  B  Motor.Fb is FALSE (now …)". Empty without any.
+    /// </summary>
+    public string AndText
+    {
+        get
+        {
+            var conditions = _definition.AndConditions;
+            if (conditions.Count == 0)
+            {
+                return "";
+            }
+
+            string Live(int i) => i < _andValues.Count && i < _andMet.Count
+                ? $" (now {ValueFormat.Format(_andValues[i], conditions[i].DataType)} {(_andMet[i] ? "✓" : "✗")})"
+                : "";
+
+            var allAnd = !_definition.HasCustomLogic && conditions.All(c => c.Join == Core.Expressions.LogicJoin.And && !c.Not);
+            if (allAnd)
+            {
+                return string.Join("   ·   ", conditions.Select((c, i) => $"AND  {c.Describe()}{Live(i)}"));
+            }
+
+            string formula;
+            try
+            {
+                formula = _definition.BuildLogic().ToString();
+            }
+            catch (Core.Expressions.ExpressionException)
+            {
+                formula = "(invalid formula)";
+            }
+
+            return $"Alarm when {formula}   ·   " + string.Join("   ·   ", conditions.Select((c, i) =>
+                $"{Core.Expressions.LogicFormula.LetterFor(i + 1)}  {c.Describe()}{Live(i)}"));
+        }
+    }
+    private IReadOnlyList<double> _andValues = [];
+    private IReadOnlyList<bool> _andMet = [];
+
+    public void SetAndValues(IReadOnlyList<double> values, IReadOnlyList<bool> met)
+    {
+        _andValues = values;
+        _andMet = met;
+        OnChanged(nameof(AndText));
+    }
 
     public bool IsEnabled => _definition.Enabled;
 

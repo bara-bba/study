@@ -52,7 +52,7 @@ public sealed class FolderNode : PlcTreeNode
 
     public string Name { get; }
 
-    /// <summary>Full '/' path, e.g. "TRN3-ELTEN/Stacker".</summary>
+    /// <summary>Full '/' path, e.g. "Line1/Stacker".</summary>
     public string Path { get; }
 
     public int PlcCount { get; set; }

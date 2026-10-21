@@ -11,6 +11,11 @@ dist/
 # Test results
 TestResults/
 
+# Site PLC lists stay local (real IPs); keep them in %APPDATA%\study
+config/
+*plcs*.csv
+plcs*.json
+
 # OS
 Thumbs.db
 Desktop.ini

@@ -53,8 +53,12 @@ internal static class Snapshot
         main.RefreshAlarmBanner();
         Render(main, Path.Combine(folder, "1-main.png"));
 
-        var editor = new WatchEditorWindow(App.Monitor.Watches[1].Definition);
+        var editor = new WatchEditorWindow(App.Monitor.Watches[3].Definition);
         Render(editor, Path.Combine(folder, "2-watch-editor.png"));
+
+        var advanced = new WatchEditorWindow(App.Monitor.Watches.First(w => w.Definition.AndConditions.Count > 0).Definition);
+        advanced.ShowAdvanced();
+        Render(advanced, Path.Combine(folder, "2b-watch-editor-advanced.png"));
 
         var plcs = new PlcListWindow();
         plcs.Select("192.168.10.21");
@@ -106,7 +110,19 @@ internal static class Snapshot
         }, "Wrapper");
         d.Status = WatchStatus.Unreachable; d.Message = "No ping reply from 192.168.30.5";
 
-        foreach (var w in new[] { a, b, c, d })
+        var e = Item(new WatchDefinition
+        {
+            Name = "Motor on, no feedback", PlcIp = "192.168.10.12", Tag = "M034.MTR", Mode = TriggerMode.WhileTrue,
+            AndConditions =
+            [
+                new AndCondition { Tag = "M034.RUN_FB", Test = AndTest.IsTrue, Not = true },
+                new AndCondition { Tag = "M034.MF_LAT", Test = AndTest.IsTrue, Join = Core.Expressions.LogicJoin.Or },
+            ],
+        }, "Merge_02");
+        e.Status = WatchStatus.Connected; e.Value = 1; e.LastRead = now; e.Message = "OK";
+        e.SetAndValues([1, 0], [true, false]);
+
+        foreach (var w in new[] { a, b, c, e, d })
         {
             App.Monitor.Watches.Add(w);
         }

@@ -16,8 +16,8 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DwmHelper.ApplyPowerToysChrome(this);
-        Icon = App.CurrentIconSource();
-        TitleIcon.Source = App.CurrentVectorIcon();
+        SourceInitialized += (_, _) => TaskbarIdentity.Apply(this, App.CurrentIcoBytes());
+        RefreshAppIcon();
 
         WatchList.ItemsSource = App.Monitor.Watches;
         App.Monitor.Watches.CollectionChanged += (_, _) => RefreshSummary();
@@ -27,6 +27,17 @@ public partial class MainWindow : Window
         RefreshSummary();
         RefreshAlarmBanner();
         RefreshPauseState();
+    }
+
+    /// <summary>Window, title-bar and taskbar icon in the current accent (also after a Settings change).</summary>
+    internal void RefreshAppIcon()
+    {
+        Icon = App.CurrentIconSource();
+        TitleIcon.Source = App.CurrentVectorIcon();
+        if (IsInitialized && new System.Windows.Interop.WindowInteropHelper(this).Handle != IntPtr.Zero)
+        {
+            TaskbarIdentity.Apply(this, App.CurrentIcoBytes());
+        }
     }
 
     /// <summary>Hides to the tray instead of exiting; monitoring keeps running.</summary>

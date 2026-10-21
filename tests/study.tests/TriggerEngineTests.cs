@@ -6,7 +6,7 @@ namespace Study.Tests;
 public class TriggerEngineTests
 {
     private static TriggerOutcome[] Feed(TriggerEngine e, params double[] values) =>
-        values.Select(e.Update).ToArray();
+        values.Select(v => e.Update(v)).ToArray();
 
     [Fact]
     public void RisingEdge_FirstReadIsBaselineOnly()

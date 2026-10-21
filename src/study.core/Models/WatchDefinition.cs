@@ -34,6 +34,38 @@ public sealed record WatchDefinition
 
     public bool Enabled { get; init; } = true;
 
+    /// <summary>
+    /// Extra tags on the same PLC, lettered B, C, … (A is the main trigger). Empty = the main
+    /// trigger alone. How they combine is <see cref="Logic"/>, or each row's
+    /// <see cref="AndCondition.Join"/> when that is empty.
+    /// </summary>
+    public IReadOnlyList<AndCondition> AndConditions { get; init; } = [];
+
+    /// <summary>
+    /// Optional custom formula over the letters, e.g. <c>A and (B or C)</c>. Empty = row by row:
+    /// each condition's join applies to everything above it.
+    /// </summary>
+    public string Logic { get; init; } = "";
+
+    public bool HasCustomLogic => !string.IsNullOrWhiteSpace(Logic);
+
+    /// <summary>The effective formula. Throws <see cref="Expressions.ExpressionException"/> on a bad custom formula.</summary>
+    public Expressions.LogicFormula BuildLogic() => HasCustomLogic
+        ? Expressions.LogicFormula.Parse(Logic, AndConditions.Count + 1)
+        : Expressions.LogicFormula.Chain(AndConditions.Select(c => c.Join).ToList(),
+            AndConditions.Select(c => c.Not).ToList());
+
+    /// <summary>Value equality, including the condition list (a record would compare that by reference).</summary>
+    public bool Equals(WatchDefinition? other) =>
+        other is not null
+        && Id == other.Id && Name == other.Name && PlcIp == other.PlcIp && Tag == other.Tag
+        && DataType == other.DataType && Mode == other.Mode && Expression == other.Expression
+        && PollMs == other.PollMs && StopWhenCleared == other.StopWhenCleared && Enabled == other.Enabled
+        && Logic == other.Logic && AndConditions.SequenceEqual(other.AndConditions);
+
+    public override int GetHashCode() =>
+        HashCode.Combine(Id, Name, PlcIp, Tag, Mode, Expression, PollMs, AndConditions.Count);
+
     /// <summary>Returns a list of human-readable problems; empty when the watch is valid.</summary>
     public IReadOnlyList<string> Validate()
     {
@@ -72,6 +104,48 @@ public sealed record WatchDefinition
             }
         }
 
+        if (AndConditions.Count >= Expressions.LogicFormula.MaxLetters)
+        {
+            errors.Add($"At most {Expressions.LogicFormula.MaxLetters - 1} extra conditions (B to Z).");
+        }
+
+        for (var i = 0; i < AndConditions.Count; i++)
+        {
+            errors.AddRange(AndConditions[i].Validate(i));
+        }
+
+        if (HasCustomLogic)
+        {
+            try
+            {
+                Expressions.LogicFormula.Parse(Logic, AndConditions.Count + 1);
+            }
+            catch (Expressions.ExpressionException ex)
+            {
+                errors.Add($"Formula: {ex.Message}");
+            }
+        }
+
+        if (Mode.IsEdge() && AndConditions.Count > 0 && TryBuildLogic() is { } logic
+            && !logic.UsesLetterOnlyPositively(0))
+        {
+            errors.Add("With an edge trigger, A is only TRUE on the read where the edge happens, so NOT A "
+                       + "or A XOR … would fire again on every other read. Use A without NOT/XOR, or pick "
+                       + "Is FALSE / Falling edge on the Basic tab instead.");
+        }
+
         return errors;
+    }
+
+    private Expressions.LogicFormula? TryBuildLogic()
+    {
+        try
+        {
+            return BuildLogic();
+        }
+        catch (Expressions.ExpressionException)
+        {
+            return null;
+        }
     }
 }

@@ -31,13 +31,13 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <Button Name="BackButton" Content="← Controller" Click="Back_Click" Style="{StaticResource SubtleButton}"
-                    Margin="0,0,8,0" Visibility="Collapsed" />
+            <Button Name="BackButton" Content="← Back" Click="Back_Click" Style="{StaticResource SubtleButton}"
+                    Height="32" Margin="0,0,8,0" Visibility="Collapsed" ToolTip="Up one level (Backspace)" />
             <TextBox Grid.Column="1" Name="FilterBox" Style="{StaticResource DarkTextBox}" TextChanged="Filter_Changed"
                      ToolTip="Filter by name" />
         </Grid>
 
-        <ListBox Grid.Row="3" Name="TagList" Style="{StaticResource DarkList}"
+        <ListBox Grid.Row="3" Name="TagList" Style="{StaticResource DarkList}" KeyDown="TagList_KeyDown"
                  MouseDoubleClick="TagList_MouseDoubleClick" SelectionChanged="TagList_SelectionChanged">
             <ListBox.ItemTemplate>
                 <DataTemplate>
@@ -45,17 +45,34 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="14" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="{Binding Name}" FontFamily="Cascadia Mono, Consolas" FontSize="12" TextTrimming="CharacterEllipsis" />
                         <TextBlock Grid.Column="1" Text="{Binding TypeLabel}" Foreground="{StaticResource Brush.TextTertiary}"
                                    FontSize="11" Margin="12,0,0,0" />
+                        <TextBlock Grid.Column="2" Text="›" Foreground="{StaticResource Brush.TextSecondary}"
+                                   HorizontalAlignment="Right" FontSize="13" Margin="0,-2,0,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Hidden" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsStruct}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsProgram}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </Grid>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
 
         <TextBlock Grid.Row="4" Name="StatusText" Style="{StaticResource Hint}" Margin="2,8,0,0"
-                   Text="Double-click a PROGRAM to see its tags. Double-click a tag to pick it." />
+                   Text="Double-click a PROGRAM or a UDT/struct to open it. Double-click a tag to pick it." />
 
         <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
             <Button Content="Cancel" Click="Cancel_Click" Style="{StaticResource SubtleButton}" Margin="0,0,8,0" />

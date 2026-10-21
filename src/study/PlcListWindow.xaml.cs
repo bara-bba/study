@@ -350,7 +350,7 @@ public partial class PlcListWindow : Window
         var ip = IpBox.Text.Trim();
         if (!PlcList.IsValidIPv4(ip))
         {
-            DetailStatus.Text = "✗ Enter a valid IPv4 address, e.g. 10.137.16.74";
+            DetailStatus.Text = "✗ Enter a valid IPv4 address, e.g. 192.168.1.10";
             return null;
         }
 

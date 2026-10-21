@@ -91,7 +91,14 @@ public sealed class TriggerEngine
         }
     }
 
-    public TriggerOutcome Update(double value)
+    /// <param name="value">The main tag's value.</param>
+    /// <param name="combine">
+    /// Combines the main trigger's signal (A) with the extra conditions; null = A alone. A is
+    /// "the edge happened on this read" for edge modes and "the condition is met" otherwise.
+    /// The alarm fires when the combined result becomes true. For an edge watch that means an
+    /// AND-only combination fires on the edge while the others hold, exactly as before.
+    /// </param>
+    public TriggerOutcome Update(double value, Func<bool, bool>? combine = null)
     {
         lock (_gate)
         {
@@ -100,10 +107,11 @@ public sealed class TriggerEngine
             _previous = value;
             _hasPrevious = true;
 
-            return _mode.IsEdge() ? UpdateEdge(prev, value, first) : UpdateLevel(prev, value);
+            var signal = MainSignal(prev, value, first);
+            var met = combine is null ? signal : combine(signal);
+            return _mode.IsEdge() ? UpdateEdge(met) : UpdateLevel(met);
         }
     }
-
     /// <summary>Stops the sound. Returns false if nothing was ringing.</summary>
     public bool Acknowledge()
     {
@@ -128,17 +136,23 @@ public sealed class TriggerEngine
         }
     }
 
-    private TriggerOutcome UpdateEdge(double prev, double value, bool first)
+    private bool MainSignal(double prev, double value, bool first) => _mode switch
     {
-        if (first)
-        {
-            return TriggerOutcome.None;
-        }
+        // Edges: the first read only sets the baseline.
+        TriggerMode.RisingEdge => !first && prev == 0 && value != 0,
+        TriggerMode.FallingEdge => !first && prev != 0 && value == 0,
+        TriggerMode.WhileTrue => value != 0,
+        TriggerMode.WhileFalse => value == 0,
+        TriggerMode.Expression => _expression!.IsTrue(value, prev),
+        _ => false,
+    };
 
-        var was = prev != 0;
-        var now = value != 0;
-        var fired = _mode == TriggerMode.RisingEdge ? !was && now : was && !now;
-        if (!fired)
+    /// <summary>Edge watches fire when the result turns true; there is no "still active" state.</summary>
+    private TriggerOutcome UpdateEdge(bool met)
+    {
+        var wasMet = _conditionMet;
+        _conditionMet = met;
+        if (!met || wasMet)
         {
             return TriggerOutcome.None;
         }
@@ -147,16 +161,8 @@ public sealed class TriggerEngine
         return TriggerOutcome.Fired;
     }
 
-    private TriggerOutcome UpdateLevel(double prev, double value)
+    private TriggerOutcome UpdateLevel(bool met)
     {
-        var met = _mode switch
-        {
-            TriggerMode.WhileTrue => value != 0,
-            TriggerMode.WhileFalse => value == 0,
-            TriggerMode.Expression => _expression!.IsTrue(value, prev),
-            _ => false,
-        };
-
         var wasMet = _conditionMet;
         _conditionMet = met;
 

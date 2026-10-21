@@ -10,10 +10,10 @@ public class PlcListTests
     [Fact]
     public void ParseCsv_HeaderCommaAndSlot()
     {
-        var (plcs, skipped) = PlcList.ParseCsv(["name,ip,slot", "UIS F1,10.137.16.74,0", "Merge,10.137.16.63,2"]);
+        var (plcs, skipped) = PlcList.ParseCsv(["name,ip,slot", "Induct 1,192.168.1.74,0", "Merge,192.168.1.63,2"]);
         Assert.Empty(skipped);
         Assert.Equal(2, plcs.Count);
-        Assert.Equal(new PlcEntry { Name = "Merge", Ip = "10.137.16.63", Slot = 2, Source = "CSV" }, plcs[1]);
+        Assert.Equal(new PlcEntry { Name = "Merge", Ip = "192.168.1.63", Slot = 2, Source = "CSV" }, plcs[1]);
     }
 
     [Fact]
@@ -101,7 +101,7 @@ public class PlcListTests
     [Fact]
     public void CsvRoundTrip_WithGroup()
     {
-        var src = new[] { new PlcEntry { Name = "S1", Ip = "10.0.0.9", Group = "TRN3-ELTEN/Stacker", Source = "CSV" } };
+        var src = new[] { new PlcEntry { Name = "S1", Ip = "10.0.0.9", Group = "Line1/Stacker", Source = "CSV" } };
         var (back, _) = PlcList.ParseCsv(PlcList.ToCsv(src));
         Assert.Equal(src[0], back[0]);
     }
@@ -172,8 +172,8 @@ public class PlcTreeTests
     [Fact]
     public void RenameFolder_MovesSubtreeOnly()
     {
-        var moved = PlcTree.RenameFolder(Sample, "ELTEN", "TRN3/ELTEN");
-        Assert.Equal("TRN3/ELTEN/Stacker", moved.Single(p => p.Name == "Stacker_2").Group);
+        var moved = PlcTree.RenameFolder(Sample, "ELTEN", "Site/ELTEN");
+        Assert.Equal("Site/ELTEN/Stacker", moved.Single(p => p.Name == "Stacker_2").Group);
         Assert.Equal("MDP", moved.Single(p => p.Name == "mdp01").Group);
         Assert.Equal("", moved.Single(p => p.Name == "Loose").Group);
     }
@@ -196,7 +196,7 @@ public class PlcTreeTests
     [Theory]
     [InlineData("PH2", "PH10", -1)]
     [InlineData("ph01", "PH02", -1)]
-    [InlineData("10.137.16.9", "10.137.16.74", -1)]
+    [InlineData("192.168.1.9", "192.168.1.74", -1)]
     [InlineData("B", "a", 1)]
     public void NaturalComparer_Orders(string a, string b, int sign) =>
         Assert.Equal(sign, Math.Sign(NaturalComparer.Instance.Compare(a, b)));

@@ -48,13 +48,13 @@ install needed. Run it from anywhere; it lives in the system tray. Windows 10 20
    turns red and a Windows notification pops. **Acknowledge** stops it — even if the condition is
    still true.
 
-The seeded list (`config/trn3-plcs.csv`, 75 TRN3 CompactLogix, all slot 0) was built from the
-RSLinx node tables + names from `plc-remote-run/trn3-plc-run-list.xlsx`.
+Your site list is not part of the repo: keep it as a CSV or JSON outside the source tree
+(`.gitignore` blocks `config/` and `*plcs*.csv`) and import it from the PLC window.
 
 ## PLC tree (`plcs.json`)
 
 The PLC list is a folder tree, sorted A→Z with natural numbers (PH2 before PH10): at each level
-sub-folders first, then PLCs. A folder is each PLC's *Folder* path (`TRN3-ELTEN/Stacker`, `/`
+sub-folders first, then PLCs. A folder is each PLC's *Folder* path (`Line1/Stacker`, `/`
 nests), so it exists while it holds PLCs. Select a folder to rename or move it (with all its
 sub-folders); ⊞ / ⊟ expand or collapse all; ⧉ opens the config folder.
 
@@ -66,9 +66,9 @@ still loads:
 {
   "version": 2,
   "groups": [
-    { "name": "TRN3-ELTEN", "groups": [
+    { "name": "Line1", "groups": [
         { "name": "Stacker", "groups": [], "plcs": [
-            { "name": "Stacker_1", "ip": "10.137.17.21", "slot": 0, "source": "RSLinx", "notes": "" } ] } ],
+            { "name": "Stacker_1", "ip": "192.168.1.21", "slot": 0, "source": "RSLinx", "notes": "" } ] } ],
       "plcs": [] }
   ],
   "plcs": []

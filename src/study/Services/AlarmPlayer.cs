@@ -25,7 +25,8 @@ internal sealed class AlarmPlayer
                 _player.Play();
             }
         };
-        _player.MediaFailed += (_, e) => Failed?.Invoke($"Could not play alarm sound: {e.ErrorException.Message}");
+        _player.MediaFailed += (_, e) => Failed?.Invoke(
+            $"Could not play alarm sound: {e.ErrorException?.Message ?? "unknown media error"}");
         _autoStop.Tick += (_, _) =>
         {
             Stop();
